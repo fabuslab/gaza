@@ -1,0 +1,27 @@
+{
+    "app": {
+        "name": "가즈아! 트레이딩",
+        "version": "1.0.0",
+        "min_window_size": [1024, 768],
+        "default_window_size": [1280, 1024]
+    },
+    "api": {
+        "kiwoom": {
+            "base_url": "https://openapi.koreainvestment.com:9443",
+            "timeout": 30
+        }
+    },
+    "database": {
+        "path": "data/database/trading.db"
+    },
+    "logging": {
+        "level": "DEBUG",
+        "file_path": "data/logs/app.log",
+        "max_size": 10485760,
+        "backup_count": 5
+    },
+    "security": {
+        "token_expiry": 86400,
+        "encryption_key": "your-secret-key-here"
+    }
+} 

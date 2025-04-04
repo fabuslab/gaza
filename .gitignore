@@ -1,0 +1,28 @@
+# 가상환경 폴더
+venv311/
+
+# 파이썬 캐시 파일
+__pycache__/
+*.pyc
+
+# 로그 파일
+logs/
+
+# 데이터베이스 파일 (경로 확인!)
+data/database/*.db
+
+# 임시 파일
+temp/
+
+# 환경 변수 파일
+.env
+
+# API 키 설정 파일 (실제 경로/이름 확인!)
+config/api_keys.json
+
+# 기타 불필요한 파일
+*.bak
+*.log
+
+# 문서 폴더 전체 제외
+doc/
