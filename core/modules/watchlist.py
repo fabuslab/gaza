@@ -40,11 +40,12 @@ class WatchlistModule(QObject):
         # 현재 활성화된 그룹 ID (기본값은 1)
         self.active_group_id = 1
         
-        # 실시간 업데이트 타이머 (2초 간격)
+        # 실시간 업데이트 타이머 (30초 간격)
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.start_watchlist_update)
-        self.update_timer.start(2000)
-        logger.debug("실시간 업데이트 타이머 설정 완료")
+        self.update_interval = 30000  # 업데이트 간격 증가 (5초 -> 30초) ms
+        self.update_timer.start(self.update_interval) # <<< 타이머 시작 주석 해제 >>>
+        logger.debug("실시간 업데이트 타이머 설정 및 시작 완료") # 로그 메시지 수정
         logger.info("관심목록 모듈 초기화 완료")
         
         self.current_worker: Optional[WatchlistUpdateWorker] = None # 현재 실행 중인 워커

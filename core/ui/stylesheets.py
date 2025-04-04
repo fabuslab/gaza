@@ -1,5 +1,5 @@
 """
-UI Stylesheet Definitions
+애플리케이션 스타일시트 정의
 """
 
 # Import constants
@@ -8,7 +8,311 @@ from .constants.fonts import Fonts, FONT_SIZES
 from .constants.rules import UI_RULES
 
 class StyleSheets:
-    """스타일시트 정의"""
+    """애플리케이션 스타일시트 모음"""
+    
+    # 기본 앱 스타일
+    APP_STYLE = f"""
+    QMainWindow, QDialog {{
+        background-color: {Colors.BACKGROUND};
+        color: {Colors.FOREGROUND};
+    }}
+    
+    QWidget {{
+        background-color: {Colors.BACKGROUND};
+        color: {Colors.FOREGROUND};
+    }}
+    
+    QLabel {{
+        color: {Colors.FOREGROUND};
+    }}
+    
+    QPushButton {{
+        background-color: {Colors.PRIMARY};
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+    }}
+    
+    QPushButton:hover {{
+        background-color: #0056b3;
+    }}
+    
+    QPushButton:pressed {{
+        background-color: #003d80;
+    }}
+    
+    QPushButton:disabled {{
+        background-color: {Colors.SECONDARY};
+        color: #cccccc;
+    }}
+    
+    QLineEdit, QComboBox {{
+        border: 1px solid {Colors.BORDER};
+        border-radius: 3px;
+        padding: 5px;
+        background-color: white;
+        color: {Colors.FOREGROUND};
+    }}
+    
+    QComboBox::drop-down {{
+        subcontrol-origin: padding;
+        subcontrol-position: top right;
+        width: 15px;
+        border-left: 1px solid {Colors.BORDER};
+    }}
+    
+    QStatusBar {{
+        background-color: #f8f9fa;
+        color: {Colors.FOREGROUND};
+    }}
+    
+    QMenuBar {{
+        background-color: #f8f9fa;
+        color: {Colors.FOREGROUND};
+    }}
+    
+    QMenuBar::item {{
+        padding: 5px 10px;
+        background-color: transparent;
+    }}
+    
+    QMenuBar::item:selected {{
+        background-color: {Colors.PRIMARY};
+        color: white;
+    }}
+    
+    QMenu {{
+        background-color: white;
+        color: {Colors.FOREGROUND};
+        border: 1px solid {Colors.BORDER};
+    }}
+    
+    QMenu::item {{
+        padding: 5px 30px 5px 20px;
+    }}
+    
+    QMenu::item:selected {{
+        background-color: {Colors.PRIMARY};
+        color: white;
+    }}
+    
+    QTabWidget::pane {{
+        border: 1px solid {Colors.BORDER};
+        background-color: white;
+    }}
+    
+    QTabBar::tab {{
+        background-color: #f0f0f0;
+        color: {Colors.FOREGROUND};
+        padding: 8px 15px;
+        border: 1px solid {Colors.BORDER};
+        border-bottom: none;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+    }}
+    
+    QTabBar::tab:selected {{
+        background-color: white;
+        border-bottom: 1px solid white;
+    }}
+    """
+    
+    # 테이블 스타일
+    TABLE_STYLE = f"""
+    QTableView {{
+        background-color: white;
+        alternate-background-color: #f9f9f9;
+        selection-background-color: {Colors.PRIMARY};
+        selection-color: white;
+        gridline-color: {Colors.BORDER};
+        border: 1px solid {Colors.BORDER};
+    }}
+    
+    QTableView::item {{
+        border: none;
+        padding: 5px;
+    }}
+    
+    QTableView::item:selected {{
+        background-color: {Colors.PRIMARY};
+        color: white;
+    }}
+    
+    QHeaderView::section {{
+        background-color: #f0f0f0;
+        color: {Colors.FOREGROUND};
+        padding: 5px;
+        border: 1px solid {Colors.BORDER};
+        border-top: none;
+        border-left: none;
+    }}
+    
+    QHeaderView::section:first {{
+        border-left: 1px solid {Colors.BORDER};
+    }}
+    """
+    
+    # 차트 툴바 스타일
+    CHART_TOOLBAR_STYLE = f"""
+    QToolBar {{
+        background-color: {Colors.BACKGROUND};
+        border: none;
+        spacing: 5px;
+        padding: 2px;
+    }}
+    
+    QToolButton {{
+        background-color: transparent;
+        border: 1px solid transparent;
+        border-radius: 3px;
+        padding: 3px;
+    }}
+    
+    QToolButton:hover {{
+        background-color: rgba(0, 0, 0, 0.1);
+        border: 1px solid {Colors.BORDER};
+    }}
+    
+    QToolButton:checked {{
+        background-color: rgba(0, 123, 255, 0.2);
+        border: 1px solid {Colors.PRIMARY};
+    }}
+    """
+    
+    # 작은 버튼 스타일
+    SMALL_BUTTON_STYLE = f"""
+    QPushButton {{
+        background-color: {Colors.PRIMARY};
+        color: white;
+        border: none;
+        padding: 3px 6px;
+        border-radius: 2px;
+        font-size: 10px;
+    }}
+    
+    QPushButton:hover {{
+        background-color: #0056b3;
+    }}
+    
+    QPushButton:pressed {{
+        background-color: #003d80;
+    }}
+    """
+    
+    # 검색 입력 스타일
+    SEARCH_INPUT_STYLE = f"""
+    QLineEdit {{
+        border: 1px solid {Colors.BORDER};
+        border-radius: 15px;
+        padding: 5px 30px 5px 10px;
+        background-color: white;
+        color: {Colors.FOREGROUND};
+    }}
+    
+    QLineEdit:focus {{
+        border: 1px solid {Colors.PRIMARY};
+    }}
+    """
+    
+    # 체크박스 스타일
+    CHECKBOX_STYLE = f"""
+    QCheckBox {{
+        spacing: 5px;
+    }}
+    
+    QCheckBox::indicator {{
+        width: 15px;
+        height: 15px;
+        border: 1px solid {Colors.BORDER};
+        border-radius: 2px;
+    }}
+    
+    QCheckBox::indicator:checked {{
+        background-color: {Colors.PRIMARY};
+        border: 1px solid {Colors.PRIMARY};
+    }}
+    
+    QCheckBox::indicator:unchecked:hover {{
+        border: 1px solid {Colors.PRIMARY};
+    }}
+    """
+    
+    # 차트 스타일
+    CHART_STYLE = f"""
+    /* 차트 배경 */
+    QGraphicsView {{
+        background-color: {Colors.CHART_BACKGROUND};
+        border: none;
+    }}
+    
+    /* 크로스헤어 스타일링은 코드에서 직접 설정 */
+    
+    /* 축 스타일 */
+    AxisItem {{
+        color: {Colors.CHART_FOREGROUND};
+    }}
+    """
+    
+    # 관심종목 관련 스타일
+    WATCHLIST_STYLE = f"""
+    QListView {{
+        background-color: white;
+        alternate-background-color: #f9f9f9;
+        selection-background-color: {Colors.PRIMARY};
+        selection-color: white;
+        border: 1px solid {Colors.BORDER};
+        outline: none;
+    }}
+    
+    QListView::item {{
+        padding: 5px;
+        border-bottom: 1px solid #eeeeee;
+    }}
+    
+    QListView::item:selected {{
+        background-color: {Colors.PRIMARY};
+        color: white;
+    }}
+    
+    QListView::item:hover:!selected {{
+        background-color: #f5f5f5;
+    }}
+    """
+    
+    # 콤보박스 스타일
+    COMBOBOX_STYLE = f"""
+    QComboBox {{
+        border: 1px solid {Colors.BORDER};
+        border-radius: 3px;
+        padding: 5px 10px;
+        min-width: 6em;
+        background-color: white;
+    }}
+    
+    QComboBox:hover {{
+        border: 1px solid {Colors.PRIMARY};
+    }}
+    
+    QComboBox::drop-down {{
+        subcontrol-origin: padding;
+        subcontrol-position: top right;
+        width: 15px;
+        border-left: 1px solid {Colors.BORDER};
+    }}
+    
+    QComboBox::down-arrow {{
+        width: 10px;
+        height: 10px;
+    }}
+    
+    QComboBox QAbstractItemView {{
+        border: 1px solid {Colors.BORDER};
+        selection-background-color: {Colors.PRIMARY};
+        selection-color: white;
+        background-color: white;
+    }}
+    """
 
     # --- 스타일 변수 정의 시작 ---
     GROUP_ADD_BUTTON = f"""
@@ -101,7 +405,7 @@ class StyleSheets:
             color: {Colors.TEXT};
             padding: 8px 16px;
             font-family: {Fonts.FAMILY};
-            font-size: {FONT_SIZES.NORMAL}px;
+            font-size: {FONT_SIZES.NORMAL};
             min-width: 80px;
         }}
         QPushButton:hover {{
@@ -833,7 +1137,7 @@ class StyleSheets:
             color: {Colors.TEXT};
             padding: 5px 10px; # 메뉴 버튼보다 작게
             font-family: {Fonts.FAMILY};
-            font-size: {FONT_SIZES.SMALL}px; # 약간 작게
+            font-size: {FONT_SIZES.SMALL}; # px 제거
             min-width: 50px;
         }}
         QPushButton:hover {{

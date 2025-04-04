@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QLabel, QPushButton, QFrame, QDialog,
     QMessageBox, QApplication, QLineEdit, QProgressBar, QMenu,
-    QMainWindow, QTableWidget, QTableWidgetItem, QHeaderView, QComboBox, QInputDialog, QListWidget, QListWidgetItem, QGroupBox
+    QMainWindow, QTableWidget, QTableWidgetItem, QHeaderView, QComboBox, QInputDialog, QListWidget, QListWidgetItem, QGroupBox, QAbstractScrollArea, QAbstractItemView
 )
 from PySide6.QtCore import Qt, Signal as pyqtSignal, QPoint, QTimer, Slot as pyqtSlot, QEvent
 from PySide6.QtGui import QCursor, QAction, QKeySequence
@@ -86,15 +86,15 @@ class IntegratedSearchWatchlistWindow(QMainWindow):
         self.watchlist_module.watchlist_group_updated.connect(self._on_watchlist_groups_updated)
         self.watchlist_module.error_occurred.connect(self._on_error_occurred)
         
-        # --- 수정 시작: 초기 데이터 로드 및 타이머 시작 주석 처리 ---
-        logger.debug("초기 데이터 로드 및 타이머 시작 임시 주석 처리됨")
-        # self.load_watchlist_groups() # 그룹 목록 먼저 로드
-        # self.watchlist_module.set_active_group(self.current_group_id) # 모듈에 활성 그룹 알림 (업데이트 시작 트리거)
+        # --- 수정 시작: 초기 데이터 로드 및 타이머 시작 주석 해제 ---
+        # logger.debug("초기 데이터 로드 및 타이머 시작 임시 주석 처리됨") # 로그는 제거
+        self.load_watchlist_groups() # 그룹 목록 먼저 로드
+        self.watchlist_module.set_active_group(self.current_group_id) # 모듈에 활성 그룹 알림 (업데이트 시작 트리거)
         
         # 검색 결과 업데이트 타이머
-        # self.search_result_timer = QTimer()
-        # self.search_result_timer.timeout.connect(self.update_search_results)
-        # self.search_result_timer.start(2000)  # 2초마다 업데이트
+        self.search_result_timer = QTimer()
+        self.search_result_timer.timeout.connect(self.update_search_results)
+        self.search_result_timer.start(2000)  # 2초마다 업데이트
         # --- 수정 끝 ---
 
         logger.info("통합 검색 및 관심 종목 화면 초기화 완료")
@@ -194,20 +194,20 @@ class IntegratedSearchWatchlistWindow(QMainWindow):
         title_layout.addWidget(add_group_button)
         left_layout.addLayout(title_layout)
         
-        # 관심 그룹 목록
+        # 관심 그룹 리스트
         self.group_list = QListWidget()
-        self.group_list.setStyleSheet(StyleSheets.WATCHLIST_ITEM)  # 새 스타일 적용
-        self.group_list.setMouseTracking(True)  # 마우스 이동 추적을 위해 설정
+        self.group_list.setEnabled(True)  # 명시적으로 활성화
+        self.group_list.setFocusPolicy(Qt.StrongFocus)  # 포커스 정책 강화
+        self.group_list.setSelectionMode(QAbstractItemView.SingleSelection)  # 단일 선택 모드 명시적 설정
         self.group_list.itemClicked.connect(self.on_group_item_clicked)
-        self.group_list.itemEntered.connect(self.on_group_item_hover)  # 아이템 호버 이벤트 연결
-        self.group_list.viewport().installEventFilter(self)  # 이벤트 필터 설치
-        self.group_list.leaveEvent = self.on_group_list_leave  # 마우스 이탈 이벤트
+        self.group_list.currentItemChanged.connect(self.on_group_item_changed)
+        # self.group_list.itemEntered.connect(self.on_group_item_hover)  # <<< 임시 주석 처리
         left_layout.addWidget(self.group_list)
         
         # 관심그룹 삭제 버튼 초기화
         self.group_delete_button = QPushButton("×")
         self.group_delete_button.setStyleSheet(StyleSheets.GROUP_DELETE_BUTTON)
-        self.group_delete_button.clicked.connect(self.on_delete_group)
+        # self.group_delete_button.clicked.connect(self.on_delete_group) # <<< 슬롯이 없으므로 주석 처리
         self.group_delete_button.hide()  # 초기에는 숨김 상태
         self.group_delete_button.setParent(self.group_list.viewport())  # 뷰포트를 부모로 설정
         
@@ -254,7 +254,7 @@ class IntegratedSearchWatchlistWindow(QMainWindow):
         self.watchlist_table.setContextMenuPolicy(Qt.CustomContextMenu)  # 컨텍스트 메뉴 정책 설정
         self.watchlist_table.customContextMenuRequested.connect(self.show_watchlist_context_menu)  # 컨텍스트 메뉴 이벤트 연결
         # 관심 그룹 테이블 더블클릭 시그널 연결
-        self.watchlist_table.stockDoubleClicked.connect(self.chart_requested)
+        self.watchlist_table.stockDoubleClicked.connect(self._on_stock_table_double_clicked)
         right_layout.addWidget(self.watchlist_table)
         
         # 왼쪽 패널 최소/최대 너비 설정
@@ -265,8 +265,10 @@ class IntegratedSearchWatchlistWindow(QMainWindow):
         watchlist_splitter.addWidget(left_panel)
         watchlist_splitter.addWidget(right_panel)
         
-        # 스플리터 초기 크기 비율 설정 (1:3)
-        watchlist_splitter.setSizes([200, 600])
+        # 스플리터 크기를 비율로 설정 (setStretchFactor)
+        watchlist_splitter.setStretchFactor(0, 1) # 왼쪽 패널(group_list) 비율 1
+        watchlist_splitter.setStretchFactor(1, 3) # 오른쪽 패널(watchlist_table) 비율 3
+        logger.debug(f"스플리터 크기 비율 설정: 1:3")
         
         # 관심 그룹 프레임 레이아웃 설정
         watchlist_frame_layout = QVBoxLayout(watchlist_frame)
@@ -294,33 +296,40 @@ class IntegratedSearchWatchlistWindow(QMainWindow):
                 pos = event.pos()
                 row = self.result_table.rowAt(pos.y())
                 if row >= 0 and row != self.search_hover_row:
-                    # 이전 호버 행 버튼 숨기기
                     if self.search_hover_row >= 0:
                         self.search_hover_button.hide()
-                    # 현재 호버 행 버튼 표시
                     self.search_hover_row = row
+                    # 검색 결과 테이블은 직접 표시 유지 (또는 타이머 적용 가능)
+                    self.on_result_table_hover(row, 0)
                     
-            elif obj == self.watchlist_table.viewport():
+            elif obj == self.watchlist_table.viewport(): 
                 pos = event.pos()
                 row = self.watchlist_table.rowAt(pos.y())
                 if row >= 0 and row != self.watchlist_hover_row:
-                    # 이전 호버 행 버튼 숨기기
                     if self.watchlist_hover_row >= 0:
                         self.watchlist_hover_button.hide()
-                    # 현재 호버 행 버튼 표시
                     self.watchlist_hover_row = row
+                    # <<< 수정: 타이머로 지연 호출 >>>
+                    # self.on_watchlist_table_hover(row, 0) # 직접 호출 제거
+                    QTimer.singleShot(100, lambda r=row: self.show_watchlist_hover_button_if_needed(r)) # 100ms 지연
                     
         elif event.type() == QEvent.Type.Leave:
             if obj == self.result_table.viewport():
                 if self.search_hover_row >= 0:
                     self.search_hover_button.hide()
                 self.search_hover_row = -1
-            elif obj == self.watchlist_table.viewport():
+            elif obj == self.watchlist_table.viewport(): 
                 if self.watchlist_hover_row >= 0:
                     self.watchlist_hover_button.hide()
                 self.watchlist_hover_row = -1
 
         return super().eventFilter(obj, event)
+    
+    # <<< 추가: 타이머 콜백 함수 >>>
+    def show_watchlist_hover_button_if_needed(self, row):
+        """타이머 콜백: 현재 호버 행이 맞으면 버튼 표시"""
+        if row == self.watchlist_hover_row:
+             self.on_watchlist_table_hover(row, 0) # 실제 버튼 표시 함수 호출
     
     def on_result_table_hover(self, row, column):
         """검색 결과 테이블 마우스 호버 이벤트"""
@@ -384,26 +393,21 @@ class IntegratedSearchWatchlistWindow(QMainWindow):
                     break
                     
             if not last_item and self.watchlist_table.rowCount() > 0:
-                # 아이템이 없지만 행은 존재하는 경우 행 전체 위치 사용
                 rect = self.watchlist_table.visualItemRect(self.watchlist_table.item(row, 0) or self.watchlist_table.cellWidget(row, 0))
             elif last_item:
                 rect = self.watchlist_table.visualItemRect(last_item)
             else:
-                # 행 자체가 없는 경우 리턴
                 return
             
-            # 버튼 위치 계산 (테이블 우측에 배치)
             table_width = self.watchlist_table.viewport().width()
             button_x = table_width - self.watchlist_hover_button.width() - 20
             button_y = rect.top() + (rect.height() - self.watchlist_hover_button.height()) // 2
             
-            # 버튼 위치 설정 및 표시
-            self.watchlist_hover_button.setParent(self.watchlist_table.viewport())  # 부모를 뷰포트로 설정
+            self.watchlist_hover_button.setParent(self.watchlist_table.viewport())
             self.watchlist_hover_button.move(button_x, button_y)
-            self.watchlist_hover_button.raise_()  # 버튼을 최상위로 올림
+            self.watchlist_hover_button.raise_()
             self.watchlist_hover_button.show()
             
-            # 로그로 버튼 위치 디버깅
             logger.debug(f"관심 그룹 호버 버튼 위치: ({button_x}, {button_y})")
         except Exception as e:
             logger.error(f"관심 그룹 호버 버튼 표시 오류: {e}", exc_info=True)
@@ -616,7 +620,7 @@ class IntegratedSearchWatchlistWindow(QMainWindow):
         try:
             # 로딩 표시
             self.is_loading = True
-            QApplication.setOverrideCursor(Qt.WaitCursor) # 로딩 커서 설정
+            # QApplication.setOverrideCursor(Qt.WaitCursor) # <<< 임시 주석 처리
             
             # 호버 버튼 초기화
             self.watchlist_hover_button.hide()
@@ -636,7 +640,7 @@ class IntegratedSearchWatchlistWindow(QMainWindow):
             logger.error(f"관심 그룹 데이터 로드 시작 중 오류: {e}", exc_info=True)
             QMessageBox.critical(self, "오류", f"관심 그룹 데이터 로드 중 오류 발생: {str(e)}")
             self.is_loading = False
-            QApplication.restoreOverrideCursor()
+            # QApplication.restoreOverrideCursor() # <<< 임시 주석 처리
         # finally 블록에서 커서 복원 및 is_loading 해제는 _on_watchlist_updated 슬롯으로 이동
             
     @pyqtSlot(int, list)
@@ -655,7 +659,7 @@ class IntegratedSearchWatchlistWindow(QMainWindow):
              # 로딩 완료 처리 및 커서 복원
              if self.is_loading:
                  self.is_loading = False
-                 QApplication.restoreOverrideCursor()
+                 # QApplication.restoreOverrideCursor() # <<< 임시 주석 처리
 
     @pyqtSlot(list)
     def _on_watchlist_groups_updated(self, groups: list):
@@ -676,7 +680,7 @@ class IntegratedSearchWatchlistWindow(QMainWindow):
         # 오류 발생 시에도 커서 복원
         if self.is_loading:
             self.is_loading = False
-            QApplication.restoreOverrideCursor()
+            # QApplication.restoreOverrideCursor() # <<< 임시 주석 처리
 
     def load_watchlist_groups(self):
         """관심 그룹 목록 로드"""
@@ -704,7 +708,8 @@ class IntegratedSearchWatchlistWindow(QMainWindow):
             logger.error(f"관심 그룹 목록 로드 실패: {e}", exc_info=True)
     
     def on_group_item_clicked(self, item):
-        """그룹 목록 아이템 클릭 시"""
+        """관심 그룹 클릭 이벤트"""
+        logger.debug(f"그룹 클릭됨: {item.text()}")
         group_id = item.data(Qt.UserRole)
         group_name = item.text()
         self.on_group_selected(group_id, group_name)
@@ -777,113 +782,16 @@ class IntegratedSearchWatchlistWindow(QMainWindow):
                 f"{self.current_group_name} 그룹에서 모든 종목 삭제 중 오류가 발생했습니다: {str(e)}"
             )
     
-    def on_group_item_hover(self, item):
-        """관심 그룹 리스트 아이템 호버 이벤트"""
-        if not item:
+    def on_group_item_changed(self, current, previous):
+        """관심 그룹 변경 이벤트"""
+        if current is None:
             return
-            
-        try:
-            # 현재 선택된 그룹은 제외 (삭제 불가능)
-            if item.data(Qt.UserRole) == self.current_group_id:
-                return
-                
-            # 기본 그룹은 삭제 불가능
-            if item.data(Qt.UserRole) == 1:  # 기본 그룹 ID가 1이라고 가정
-                return
-                
-            # 호버 인덱스 저장
-            self.group_hover_index = self.group_list.row(item)
-            
-            # 삭제 버튼 위치 계산
-            rect = self.group_list.visualItemRect(item)
-            button_size = self.group_delete_button.sizeHint()
-            
-            # 버튼 위치 - 아이템 오른쪽 끝에서 약간 안쪽
-            button_x = rect.right() - button_size.width() - 10
-            button_y = rect.top() + (rect.height() - button_size.height()) // 2
-            
-            # 버튼 위치 설정 및 표시
-            self.group_delete_button.move(button_x, button_y)
-            self.group_delete_button.show()
-            
-        except Exception as e:
-            logger.error(f"관심그룹 호버 버튼 표시 오류: {e}", exc_info=True)
-    
-    def on_group_list_leave(self, event):
-        """관심 그룹 리스트 마우스 이탈 이벤트"""
-        self.group_hover_index = -1
-        self.group_delete_button.hide()
-        super(QListWidget, self.group_list).leaveEvent(event)
-    
-    def on_delete_group(self):
-        """관심 그룹 삭제"""
-        if self.group_hover_index < 0:
-            return
-            
-        try:
-            # 그룹 정보 가져오기
-            item = self.group_list.item(self.group_hover_index)
-            if not item:
-                return
-                
-            group_id = item.data(Qt.UserRole)
-            group_name = item.text()
-            
-            # 기본 그룹은 삭제 불가능
-            if group_id == 1:  # 기본 그룹 ID가 1이라고 가정
-                QMessageBox.warning(
-                    self,
-                    "삭제 불가",
-                    "기본 그룹은 삭제할 수 없습니다."
-                )
-                return
-                
-            # 삭제 확인 메시지
-            reply = QMessageBox.question(
-                self,
-                "그룹 삭제 확인",
-                f"'{group_name}' 그룹을 삭제하시겠습니까?\n그룹 내 모든 종목도 함께 삭제됩니다.",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No
-            )
-            
-            if reply != QMessageBox.Yes:
-                return
-            
-            # 호버 버튼 숨기기
-            self.group_delete_button.hide()
-            self.group_hover_index = -1
-            
-            # 그룹 삭제
-            result = self.watchlist_module.remove_group(group_id)
-            if result:
-                # 성공 메시지 표시
-                QMessageBox.information(
-                    self,
-                    "삭제 성공",
-                    f"'{group_name}' 그룹이 삭제되었습니다."
-                )
-                
-                # 관심 그룹 목록 새로고침
-                self.load_watchlist_groups()
-                
-                # 기본 그룹 선택
-                self.on_group_selected(1, "기본 그룹")
-            else:
-                QMessageBox.warning(
-                    self,
-                    "삭제 실패",
-                    f"'{group_name}' 그룹 삭제에 실패했습니다."
-                )
-                
-        except Exception as e:
-            logger.error(f"관심 그룹 삭제 실패: {e}", exc_info=True)
-            QMessageBox.critical(
-                self,
-                "오류",
-                f"관심 그룹 삭제 중 오류가 발생했습니다: {str(e)}"
-            )
-    
+        
+        logger.debug(f"그룹 변경됨: {current.text()}")
+        group_id = current.data(Qt.UserRole)
+        group_name = current.text()
+        self.on_group_selected(group_id, group_name)
+
     def show_result_context_menu(self, position):
         """검색 결과 테이블 컨텍스트 메뉴"""
         try:
@@ -1021,3 +929,9 @@ class IntegratedSearchWatchlistWindow(QMainWindow):
         stock_info = self.result_table.get_stock_info_at_row(index.row())
         if stock_info:
              self._add_item_to_watchlist(stock_info['종목코드'], stock_info['종목명'])
+
+    @pyqtSlot(str, str)
+    def _on_stock_table_double_clicked(self, stock_code, stock_name):
+        """관심목록 테이블 더블 클릭 시 차트 요청 시그널 발생"""
+        logger.debug(f"관심목록 테이블 더블 클릭됨: {stock_code} ({stock_name}). 차트 요청 시그널 발생 시도.")
+        self.chart_requested.emit(stock_code, stock_name)

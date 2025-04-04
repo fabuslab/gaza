@@ -1,5 +1,9 @@
 import pandas as pd
-import pandas_ta as ta # pandas-ta 임포트
+try:
+    import pandas_ta as ta  # pandas-ta 임포트
+except ImportError:
+    print("경고: pandas_ta 모듈을 임포트할 수 없습니다. 기본 지표만 계산됩니다.")
+    ta = None
 import logging
 from typing import List, Optional, Dict, Any
 
@@ -30,7 +34,7 @@ def calculate_indicators(df: pd.DataFrame) -> pd.DataFrame:
     # 계산 편의를 위해 복사본 사용
     df_res = df.copy()
 
-    # 필요한 경우 데이터 타입 변환 (pandas-ta는 보통 float 필요)
+    # 필요한 경우, 데이터 타입 변환 (pandas-ta는 보통 float 필요)
     for col in required_columns:
         if not pd.api.types.is_numeric_dtype(df_res[col]):
              try:
@@ -50,6 +54,23 @@ def calculate_indicators(df: pd.DataFrame) -> pd.DataFrame:
             return df
 
     try:
+        # pandas_ta가 없으면 기본 계산만 수행
+        if ta is None:
+            logger.warning("pandas_ta 라이브러리가 없어 기본 지표만 계산합니다.")
+            # --- 이동 평균선 (SMA & EMA) 기본 구현 --- 
+            sma_periods = [5, 10, 20, 60, 120] 
+            for period in sma_periods:
+                if len(df_res) >= period:
+                    df_res[f'SMA_{period}'] = df_res['Close'].rolling(window=period).mean()
+                else:
+                    df_res[f'SMA_{period}'] = pd.NA
+                    
+            # 거래대금만 계산
+            df_res['TradingValue'] = df_res['Close'] * df_res['Volume']
+            
+            logger.info("기본 지표 계산 완료 (pandas_ta 없음)")
+            return df_res
+            
         # --- 이동 평균선 (SMA & EMA) --- 
         sma_periods = [5, 10, 20, 60, 120] 
         ema_periods = [5, 10, 20, 60, 120]

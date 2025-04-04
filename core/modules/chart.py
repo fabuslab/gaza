@@ -5,12 +5,24 @@
 import logging
 import time
 import pandas as pd
+import numpy as np
 from typing import List, Dict, Optional
 from PySide6.QtCore import QObject, Signal as pyqtSignal, QTimer, Slot as pyqtSlot
 from datetime import datetime, timedelta
 
 from core.api.kiwoom import KiwoomAPI
-from core.utils.indicators import calculate_indicators
+# pandas_ta 모듈 임포트 오류 방지를 위한 수정
+try:
+    from core.utils.indicators import calculate_indicators
+    print("indicators 모듈 임포트 성공")
+except ImportError as e:
+    print(f"indicators 모듈 임포트 실패: {e}")
+    # 임시 대체 기능 정의
+    def calculate_indicators(df):
+        print("기본 지표 계산 함수 사용 (indicators 모듈 로드 실패)")
+        if 'Close' in df.columns and 'Volume' in df.columns:
+            df['TradingValue'] = df['Close'] * df['Volume']
+        return df
 
 logger = logging.getLogger(__name__)
 
@@ -144,14 +156,24 @@ class ChartModule(QObject):
                 logger.debug(f"Attempting to convert time column '{time_col}' using format '{time_format}'") # 변환 시도 로그
 
                 df['Date'] = pd.to_datetime(df[time_col], format=time_format, errors='coerce')
-                # --- 추가: 시간대 정보(KST) 설정 --- 
+                # --- 추가: 시간대 정보(KST) 설정 및 상세 로깅 ---
                 try:
                     # NaT가 아닌 유효한 날짜에 대해서만 시간대 설정
                     valid_dates = df['Date'].notna()
-                    df.loc[valid_dates, 'Date'] = df.loc[valid_dates, 'Date'].dt.tz_localize('Asia/Seoul')
+                    df.loc[valid_dates, 'Date'] = df.loc[valid_dates, 'Date'].dt.tz_localize('Asia/Seoul') # ambiguous='infer' 제거 (에러 발생 시 명시적 처리 위해)
                     logger.debug("DataFrame 'Date' 컬럼에 KST 시간대 적용 완료")
+                except AmbiguousTimeError as amb_err:
+                    logger.error(f"모호한 시간대 오류(AmbiguousTimeError): {amb_err}", exc_info=True)
+                    # 모호한 시간(예: DST 변경 시) 처리 - 여기서는 일단 NaT 처리
+                    df.loc[amb_err.index, 'Date'] = pd.NaT
+                except NonExistentTimeError as non_err:
+                    logger.error(f"존재하지 않는 시간대 오류(NonExistentTimeError): {non_err}", exc_info=True)
+                    # 존재하지 않는 시간(예: DST 변경 시) 처리 - 여기서는 일단 NaT 처리
+                    df.loc[non_err.index, 'Date'] = pd.NaT
                 except Exception as tz_err:
-                    logger.error(f"시간대 설정 중 오류 발생: {tz_err}", exc_info=True)
+                    logger.error(f"시간대 설정 중 예상치 못한 오류 발생: {tz_err}", exc_info=True)
+                    # 예상치 못한 오류 발생 시에도 일단 NaT 처리
+                    df.loc[df['Date'].notna(), 'Date'] = pd.NaT 
                 # --- 추가 끝 ---
 
                 # --- Enhanced Logging ---
@@ -162,6 +184,10 @@ class ChartModule(QObject):
                 if nat_count > 0:
                     original_time_samples = df.loc[df['Date'].isna(), time_col].head().tolist()
                     logger.warning(f"NaT 발생 시간 데이터 샘플 (원본 형식): {original_time_samples}")
+                    # --- 추가: NaT 발생한 인덱스 로깅 ---
+                    nat_indices = df.index[df['Date'].isna()].tolist()
+                    logger.warning(f"Indices where NaT occurred: {nat_indices}")
+                    # --- 추가 끝 ---
                 logger.debug(f"DataFrame shape before dropna: {df.shape}")
                 # --- End Enhanced Logging ---
 
@@ -185,6 +211,10 @@ class ChartModule(QObject):
                     logger.warning(f"중복된 시간 인덱스 발견 ({stock_code}, {period}). 마지막 값만 유지합니다.")
                     df = df[~df.index.duplicated(keep='last')]
                 # --- 중복 처리 끝 ---
+
+                # --- 추가: 순서 번호 컬럼 생성 ---
+                df['ordinal'] = np.arange(len(df))
+                # --- 추가 끝 ---
 
                 # --- 컬럼명 표준화 및 필수 컬럼 정의 (올바른 위치!) ---
                 rename_map = {}
@@ -213,7 +243,7 @@ class ChartModule(QObject):
                 # --- 표준화 및 정의 끝 ---
 
                 # --- 최종 컬럼 선택 및 타입 변환 ---
-                df = df[required_cols] # 이제 required_cols 사용 가능
+                df = df[required_cols + ['ordinal']] # 필요한 컬럼과 ordinal 선택
                 for col in df.columns:
                     if pd.api.types.is_object_dtype(df[col]):
                          df[col] = pd.to_numeric(df[col].astype(str).str.replace(r'[+-,]', '', regex=True), errors='coerce')
@@ -235,8 +265,10 @@ class ChartModule(QObject):
                  self.is_loading = False
 
             # --- 보조지표 계산 로직 수정 ---
-            if not period.endswith('T') and not df.empty: # 틱 데이터 제외 및 빈 df 제외
-                self.chart_data = calculate_indicators(df)
+            if not period.endswith('T') and not df.empty:
+                # calculate_indicators가 'ordinal' 컬럼을 유지하도록 확인/수정 필요
+                self.chart_data = calculate_indicators(df.drop(columns=['ordinal'])) # 계산 전 ordinal 제외
+                self.chart_data['ordinal'] = df['ordinal'].values # 계산 후 다시 추가
             elif period.endswith('T') and not df.empty: # 틱 데이터 처리 (수정)
                  # TradingValue 계산 전 타입 확인 및 변환 추가
                  for col in ['Close', 'Volume']:
@@ -248,6 +280,12 @@ class ChartModule(QObject):
                  df.dropna(subset=['TradingValue'], inplace=True)
                  # --- 추가 끝 ---
                  self.chart_data = df
+                 # --- 추가: 틱 데이터 최종 로깅 ---
+                 if period.endswith('T') and not self.chart_data.empty:
+                     logger.debug(f"최종 처리된 틱 데이터 샘플:\n{self.chart_data.head().to_string()}")
+                     logger.debug(f"틱 데이터 인덱스 (시간) 샘플: {self.chart_data.index[:5].tolist()}")
+                     logger.debug(f"틱 데이터 종가 샘플: {self.chart_data['Close'].values[:5]}")
+                 # --- 추가 끝 ---
             else: # df가 비어있는 경우
                 self.chart_data = df # 빈 df 그대로 할당
             # --- 계산 끝 ---

@@ -96,6 +96,63 @@ class StockTableWidget(QTableWidget):
         # 읽기 전용 설정
         self.setEditTriggers(QTableWidget.NoEditTriggers)
         
+        # <<< 추가: 정렬 활성화 및 정렬 방식 오버라이드 준비 >>>
+        self.setSortingEnabled(True) 
+        # self.sortItems = self._custom_sort # sortItems 직접 오버라이드
+
+    # <<< 추가: 사용자 정의 정렬 메서드 >>>
+    def sortItems(self, column: int, order: Qt.SortOrder):
+        """숫자 컬럼(현재가, 전일대비, 등락률, 거래량, 거래대금)에 대한 정렬 오버라이드"""
+        numeric_columns = [2, 3, 4, 5, 6] # 현재가, 전일대비, 등락률, 거래량, 거래대금 컬럼 인덱스
+        
+        if column in numeric_columns:
+            logger.debug(f"Custom sorting for numeric column: {column}, order: {order}")
+            # 정렬 비활성화 (데이터 재정렬 중 내부 정렬 방지)
+            self.setSortingEnabled(False)
+            
+            # 데이터를 가져와서 정렬
+            items_data = []
+            for row in range(self.rowCount()):
+                item = self.item(row, column)
+                # UserRole+1에 저장된 숫자 데이터 또는 기본 텍스트 데이터 사용
+                sort_key_data = item.data(Qt.UserRole + 1) if item else None 
+                sort_key = 0.0 # 기본값
+                if sort_key_data is not None:
+                    try:
+                        sort_key = float(sort_key_data) # 저장된 숫자 데이터 사용
+                    except (ValueError, TypeError):
+                         # 저장된 데이터가 숫자가 아니면 텍스트에서 변환 시도 (최후의 수단)
+                         try: 
+                             text_val = item.text().replace('%', '').replace('▲', '').replace('△', '').replace('▼', '').replace('▽', '').replace('+', '').replace('-', '').replace(',', '').strip()
+                             sort_key = float(text_val) if text_val else 0.0
+                         except ValueError:
+                             pass # 변환 실패 시 0.0 유지
+                items_data.append((sort_key, row))
+
+            # 키(숫자 값) 기준으로 정렬
+            items_data.sort(key=lambda x: x[0], reverse=(order == Qt.DescendingOrder))
+            
+            # 테이블 행 재배치 (직접 행 이동 방식 대신 데이터 재설정 방식 사용)
+            current_items = []
+            for _, original_row in items_data:
+                row_items = []
+                for col in range(self.columnCount()):
+                    item = self.takeItem(original_row, col) 
+                    row_items.append(item if item else QTableWidgetItem("")) # 아이템 복사 또는 빈 아이템
+                current_items.append(row_items)
+            
+            # 정렬된 순서대로 아이템 재설정
+            for new_row, row_items in enumerate(current_items):
+                for col, item in enumerate(row_items):
+                    self.setItem(new_row, col, item)
+            
+            # 정렬 다시 활성화
+            self.setSortingEnabled(True)
+        else:
+            # 다른 컬럼은 기본 정렬 사용
+            logger.debug(f"Default sorting for column: {column}")
+            super().sortItems(column, order)
+
     def eventFilter(self, obj, event):
         """이벤트 필터"""
         if obj is self.viewport():
@@ -287,6 +344,11 @@ class StockTableWidget(QTableWidget):
                     diff_item = QTableWidgetItem(diff_str)
                     diff_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                     diff_item.setForeground(price_color)
+                    try:
+                        diff_value = float(str(stock.get('pred_pre', stock.get('prc_diff', 0))).replace(',', ''))
+                        diff_item.setData(Qt.UserRole + 1, diff_value)
+                    except ValueError:
+                        diff_item.setData(Qt.UserRole + 1, 0)
                     self.setItem(row, 3, diff_item)
                     
                     # 5. 등락률
@@ -294,6 +356,11 @@ class StockTableWidget(QTableWidget):
                     change_item = QTableWidgetItem(change_str)
                     change_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                     change_item.setForeground(price_color)
+                    try:
+                        rate_value = float(str(stock.get('flu_rt', stock.get('fluc_rt', 0))).replace('%', '').strip())
+                        change_item.setData(Qt.UserRole + 1, rate_value)
+                    except ValueError:
+                        change_item.setData(Qt.UserRole + 1, 0.0)
                     self.setItem(row, 4, change_item)
                     
                     # 6. 거래량

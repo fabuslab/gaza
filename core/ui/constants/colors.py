@@ -2,6 +2,8 @@
 UI Color Constants
 """
 
+from PySide6.QtGui import QColor
+
 class Colors:
     """색상 정의"""
     # 기본 색상
@@ -60,6 +62,9 @@ class Colors:
     TEXT_ON_PRIMARY = WHITE # Primary 배경 위의 텍스트
     TEXT_ON_SECONDARY = WHITE # Secondary 배경 위의 텍스트
     TEXT_ON_DANGER = WHITE # Danger 배경 위의 텍스트
+
+    # 추가: stylesheets.py에서 사용하는 누락된 상수
+    FOREGROUND = "#333333" # TEXT와 동일한 색상 값 사용
 
     # 테두리 색상
     BORDER = "#aaaaaa"
@@ -142,3 +147,115 @@ class Colors:
     VOLUME_DEFAULT = '#0000aa'   # OHLC 없을 때 기본 거래량 색상 (파란색 계열)
 
     # ----- 작은 버튼 스타일 끝 ----- 
+
+    # 차트 애플리케이션에서 사용하는 색상 상수 정의
+    CHART_GRID = "#EEEEEE"
+    REFERENCE_LINE = "#999999"  # 회색
+    TOOLTIP_BACKGROUND = QColor(0, 0, 0, 220)  # 검정색 (알파값 220)
+    TOOLTIP_TEXT = "#FFFFFF"  # 흰색
+
+    # 차트 애플리케이션에서 사용하는 색상 상수 정의
+    BOLLINGER_UPPER = "#DB4437"  # 상단밴드: 빨간색
+    BOLLINGER_LOWER = "#4285F4"  # 하단밴드: 파란색
+    BOLLINGER_FILL = QColor(200, 200, 255, 30)  # 밴드 채우기: 연한 파란색 (알파값 30)
+    RSI = "#4285F4"  # 파란색
+    RSI_OVERBOUGHT = "#DB4437"  # 과매수 영역: 빨간색
+    RSI_OVERSOLD = "#0F9D58"  # 과매도 영역: 녹색
+    MACD_HIST_POS = "#FF5252"  # 양수 히스토그램: 빨간색
+    MACD_HIST_NEG = "#1E88E5"  # 음수 히스토그램: 파란색
+    SMA_5 = "#4285F4"  # 파란색 (5일선)
+    SMA_10 = "#0F9D58"  # 녹색 (10일선)
+    SMA_20 = "#DB4437"  # 빨간색 (20일선)
+    SMA_60 = "#673AB7"  # 보라색 (60일선)
+    SMA_120 = "#795548"  # 갈색 (120일선)
+    SMA_240 = "#000000"  # 검정색 (240일선)
+    EMA_5 = "#4285F4"  # 파란색 (5일선)
+    EMA_10 = "#0F9D58"  # 녹색 (10일선)
+    EMA_20 = "#DB4437"  # 빨간색 (20일선)
+    EMA_60 = "#673AB7"  # 보라색 (60일선)
+    EMA_120 = "#795548"  # 갈색 (120일선)
+    BOLLINGER_MID = "#000000"  # 중간선: 검정색
+    MACD_SIGNAL = "#DB4437"  # 시그널선: 빨간색
+    MACD_LINE = "#4285F4"  # MACD선: 파란색
+    MACD_HIST_UP = "#FF5252"  # 양수 히스토그램: 빨간색
+    MACD_HIST_DOWN = "#1E88E5"  # 음수 히스토그램: 파란색
+    MACD_HIST_POS = "#FF5252"  # 양수 히스토그램: 빨간색
+    MACD_HIST_NEG = "#1E88E5"  # 음수 히스토그램: 파란색
+    RSI_OVER = "#DB4437"  # 과매수/과매도 기준선: 빨간색
+    RSI_OVERBOUGHT = "#DB4437"  # 과매수 영역: 빨간색
+    RSI_OVERSOLD = "#0F9D58"  # 과매도 영역: 녹색
+    MACD_LINE = "#4285F4"  # MACD선: 파란색
+    MACD_SIGNAL = "#DB4437"  # 시그널선: 빨간색
+    MACD_HIST_POS = "#FF5252"  # 양수 히스토그램: 빨간색
+    MACD_HIST_NEG = "#1E88E5"  # 음수 히스토그램: 파란색
+    REFERENCE_LINE = "#999999"  # 회색
+    TOOLTIP_BACKGROUND = QColor(0, 0, 0, 220)  # 검정색 (알파값 220)
+    TOOLTIP_TEXT = "#FFFFFF"  # 흰색
+    BOLLINGER_UPPER = "#DB4437"  # 상단밴드: 빨간색
+    BOLLINGER_LOWER = "#4285F4"  # 하단밴드: 파란색
+    BOLLINGER_FILL = QColor(200, 200, 255, 30)  # 밴드 채우기: 연한 파란색 (알파값 30)
+    RSI = "#4285F4"  # 파란색
+    RSI_OVERBOUGHT = "#DB4437"  # 과매수 영역: 빨간색
+    RSI_OVERSOLD = "#0F9D58"  # 과매도 영역: 녹색
+    MACD_LINE = "#4285F4"  # MACD선: 파란색
+    MACD_SIGNAL = "#DB4437"  # 시그널선: 빨간색
+    MACD_HIST_POS = "#FF5252"  # 양수 히스토그램: 빨간색
+    MACD_HIST_NEG = "#1E88E5"  # 음수 히스토그램: 파란색
+    REFERENCE_LINE = "#999999"  # 회색
+    TOOLTIP_BACKGROUND = QColor(0, 0, 0, 220)  # 검정색 (알파값 220)
+    TOOLTIP_TEXT = "#FFFFFF"  # 흰색
+    BOLLINGER_UPPER = "#DB4437"  # 상단밴드: 빨간색
+    BOLLINGER_LOWER = "#4285F4"  # 하단밴드: 파란색
+    BOLLINGER_FILL = QColor(200, 200, 255, 30)  # 밴드 채우기: 연한 파란색 (알파값 30)
+    RSI = "#4285F4"  # 파란색
+    RSI_OVERBOUGHT = "#DB4437"  # 과매수 영역: 빨간색
+    RSI_OVERSOLD = "#0F9D58"  # 과매도 영역: 녹색
+    MACD_LINE = "#4285F4"  # MACD선: 파란색
+    MACD_SIGNAL = "#DB4437"  # 시그널선: 빨간색
+    MACD_HIST_POS = "#FF5252"  # 양수 히스토그램: 빨간색
+    MACD_HIST_NEG = "#1E88E5"  # 음수 히스토그램: 파란색
+    REFERENCE_LINE = "#999999"  # 회색
+    TOOLTIP_BACKGROUND = QColor(0, 0, 0, 220)  # 검정색 (알파값 220)
+    TOOLTIP_TEXT = "#FFFFFF"  # 흰색
+    BOLLINGER_UPPER = "#DB4437"  # 상단밴드: 빨간색
+    BOLLINGER_LOWER = "#4285F4"  # 하단밴드: 파란색
+    BOLLINGER_FILL = QColor(200, 200, 255, 30)  # 밴드 채우기: 연한 파란색 (알파값 30)
+    RSI = "#4285F4"  # 파란색
+    RSI_OVERBOUGHT = "#DB4437"  # 과매수 영역: 빨간색
+    RSI_OVERSOLD = "#0F9D58"  # 과매도 영역: 녹색
+    MACD_LINE = "#4285F4"  # MACD선: 파란색
+    MACD_SIGNAL = "#DB4437"  # 시그널선: 빨간색
+    MACD_HIST_POS = "#FF5252"  # 양수 히스토그램: 빨간색
+    MACD_HIST_NEG = "#1E88E5"  # 음수 히스토그램: 파란색
+    REFERENCE_LINE = "#999999"  # 회색
+    TOOLTIP_BACKGROUND = QColor(0, 0, 0, 220)  # 검정색 (알파값 220)
+    TOOLTIP_TEXT = "#FFFFFF"  # 흰색
+    BOLLINGER_UPPER = "#DB4437"  # 상단밴드: 빨간색
+    BOLLINGER_LOWER = "#4285F4"  # 하단밴드: 파란색
+    BOLLINGER_FILL = QColor(200, 200, 255, 30)  # 밴드 채우기: 연한 파란색 (알파값 30)
+    RSI = "#4285F4"  # 파란색
+    RSI_OVERBOUGHT = "#DB4437"  # 과매수 영역: 빨간색
+    RSI_OVERSOLD = "#0F9D58"  # 과매도 영역: 녹색
+    MACD_LINE = "#4285F4"  # MACD선: 파란색
+    MACD_SIGNAL = "#DB4437"  # 시그널선: 빨간색
+    MACD_HIST_POS = "#FF5252"  # 양수 히스토그램: 빨간색
+    MACD_HIST_NEG = "#1E88E5"  # 음수 히스토그램: 파란색
+    REFERENCE_LINE = "#999999"  # 회색
+    TOOLTIP_BACKGROUND = QColor(0, 0, 0, 220)  # 검정색 (알파값 220)
+    TOOLTIP_TEXT = "#FFFFFF"  # 흰색
+    BOLLINGER_UPPER = "#DB4437"  # 상단밴드: 빨간색
+    BOLLINGER_LOWER = "#4285F4"  # 하단밴드: 파란색
+    BOLLINGER_FILL = QColor(200, 200, 255, 30)  # 밴드 채우기: 연한 파란색 (알파값 30)
+    RSI = "#4285F4"  # 파란색
+    RSI_OVERBOUGHT = "#DB4437"  # 과매수 영역: 빨간색
+    RSI_OVERSOLD = "#0F9D58"  # 과매도 영역: 녹색
+    MACD_LINE = "#4285F4"  # MACD선: 파란색
+    MACD_SIGNAL = "#DB4437"  # 시그널선: 빨간색
+    MACD_HIST_POS = "#FF5252"  # 양수 히스토그램: 빨간색
+    MACD_HIST_NEG = "#1E88E5"  # 음수 히스토그램: 파란색
+    REFERENCE_LINE = "#999999"  # 회색
+    TOOLTIP_BACKGROUND = QColor(0, 0, 0, 220)  # 검정색 (알파값 220)
+    TOOLTIP_TEXT = "#FFFFFF"  # 흰색
+    BOLLINGER_UPPER = "#DB4437"  # 상단밴드: 빨간색
+    BOLLINGER_LOWER = "#4285F4"  # 하단밴드: 파란색
+    BOLLINGER_FILL = QColor(200, 200, 255, 30)  # 밴드 채우기: 연한 파란색 (알파값 30)

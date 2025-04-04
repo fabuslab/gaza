@@ -296,21 +296,24 @@ class MainWindow(QMainWindow):
             else:
                 logger.debug(f"새 창 생성: {window_key}")
                 content_window = IntegratedSearchWatchlistWindow(self.kiwoom_api)
+                
+                # <<< 시그널 연결 다시 추가 >>>
+                content_window.chart_requested.connect(self._on_stock_chart_requested)
+
                 sub_window = self.mdi_area.addSubWindow(content_window)
                 self.windows[window_key] = sub_window
-                # --- chart_requested 시그널 연결 다시 추가 --- 
-                content_window.chart_requested.connect(self._on_stock_chart_requested)
-                # ---------------------------------------------
                 sub_window.setWindowTitle(content_window.windowTitle())
-                # --- 수정 시작: 저장된 geometry 복원 ---
-                saved_geometry = self.settings.value(f"window/{window_key}/geometry")
-                if saved_geometry:
-                    logger.debug(f"저장된 geometry 복원: {window_key}, {saved_geometry}")
-                    sub_window.setGeometry(saved_geometry)
-                else:
-                    logger.debug(f"저장된 geometry 없음, 기본 표시: {window_key}")
-                    sub_window.show() # 저장된 값 없으면 기본 show
-                # --- 수정 끝 ---
+                # --- 수정 시작: 저장된 geometry 복원 주석 처리 ---
+                # saved_geometry = self.settings.value(f"window/{window_key}/geometry")
+                # if saved_geometry:
+                #     logger.debug(f"저장된 geometry 복원: {window_key}, {saved_geometry}")
+                #     sub_window.setGeometry(saved_geometry)
+                # else:
+                #     logger.debug(f"저장된 geometry 없음, 기본 표시: {window_key}")
+                
+                # <<< 다시 추가: sub_window 표시 >>>
+                sub_window.show()
+                
                 logger.debug(f"새 창 {window_key} 추가 및 표시 완료.")
 
         except Exception as e:
@@ -635,22 +638,20 @@ class MainWindow(QMainWindow):
         # self._show_chart_window(None, "차트") # 또는 None으로 차트 열기 시도
         
     @pyqtSlot(str, str)
-    def _on_stock_chart_requested(self, stock_code: str, stock_name: str):
-        """관심종목 창 등에서 차트 요청 시 호출되는 슬롯"""
-        logger.info(f"차트 요청 수신: code={stock_code}, name={stock_name}")
+    def _on_stock_chart_requested(self, stock_code, stock_name):
+        """차트 요청 시그널을 처리하는 슬롯"""
+        logger.debug(f"MainWindow: 차트 요청 수신 - 코드: {stock_code}, 이름: {stock_name}") # 로그 추가
         self._show_chart_window(stock_code, stock_name)
 
     def _show_chart_window(self, stock_code: Optional[str], stock_name: Optional[str]):
         """특정 종목의 차트 창을 표시하거나 활성화합니다."""
-        logger.debug(f"_show_chart_window 호출: code={stock_code}, name={stock_name}")
-        if not stock_code: # 빈 차트 요청 처리 (선택적)
-            # logger.debug("종목 코드 없이 차트 창 요청됨")
-            # self._show_empty_chart_window() # 또는 다른 처리
+        logger.debug(f"_show_chart_window 호출: code={stock_code}, name={stock_name}") # 진입 로그
+        if not stock_code: 
             QMessageBox.warning(self, "오류", "차트를 표시할 종목 코드가 없습니다.")
             return
 
         logger.info(f"차트 창 표시/활성화 진행: {stock_code} ({stock_name})" )
-        window_key = f"chart_{stock_code}" # 종목 코드로 차트 창 고유 키 생성
+        window_key = f"chart_{stock_code}" 
 
         logger.debug(f"현재 chart_subwindows 키: {list(self.chart_subwindows.keys())}")
         existing_subwindow = None
@@ -659,60 +660,59 @@ class MainWindow(QMainWindow):
             if subwindow_ref and subwindow_ref.widget():
                 existing_subwindow = subwindow_ref
             else:
-                del self.chart_subwindows[window_key]
-                logger.debug(f"유효하지 않은 차트 창 참조 제거: {window_key}")
+                 del self.chart_subwindows[window_key]
+                 logger.debug(f"유효하지 않은 차트 창 참조 제거: {window_key}")
 
         if existing_subwindow:
-            logger.debug(f"기존 차트 창 활성화: {window_key}")
+            logger.debug(f"기존 차트 창 활성화 시도: {window_key}") # 활성화 시도 로그
             if existing_subwindow.isMinimized(): existing_subwindow.showNormal()
             self.mdi_area.setActiveSubWindow(existing_subwindow)
-            existing_subwindow.raise_()
-            existing_subwindow.activateWindow()
+            # raise_(), activateWindow()는 일단 제거된 상태 유지
+            logger.debug(f"기존 차트 창 활성화 완료: {window_key}") # 활성화 완료 로그
         else:
-            logger.debug(f"새 차트 창 생성 시도: {window_key}")
+            logger.debug(f"새 차트 창 생성 함수 호출: {window_key}") # 생성 함수 호출 로그
             self._create_and_show_new_chart_window(stock_code, stock_name or stock_code)
 
     def _create_and_show_new_chart_window(self, stock_code: str, stock_name: str):
         """새로운 차트 창을 생성하고 표시합니다."""
+        logger.debug(f"_create_and_show_new_chart_window 진입: {stock_code}") # 함수 진입 로그
         try:
             # KiwoomAPI 인스턴스가 유효한지 확인
             if not hasattr(self, 'kiwoom_api') or not self.kiwoom_api:
                  logger.error("KiwoomAPI가 초기화되지 않아 차트 창을 생성할 수 없습니다.")
                  QMessageBox.critical(self, "오류", "API 연결 오류로 차트 창을 열 수 없습니다.")
-                 return None # 실패 시 None 반환 (호출 측에서 처리)
+                 return None 
                  
-            # ChartWindow 생성 (kiwoom_api 전달)
-            # ChartWindow가 QWidget이므로 parent는 필요 없을 수 있음
+            # ChartWindow 생성 전 로그
+            logger.debug(f"ChartWindow({stock_code}) 생성 시도...")
             chart_window = ChartWindow(self.kiwoom_api, stock_code, stock_name)
             logger.debug(f"ChartWindow({stock_code}) 생성 완료: {chart_window}")
 
-            # QMdiArea에 서브 윈도우로 추가
+            # QMdiArea에 서브 윈도우로 추가 전 로그
+            logger.debug(f"addSubWindow({stock_code}) 호출 시도...")
             sub_window = self.mdi_area.addSubWindow(chart_window)
-            # WA_DeleteOnClose 속성 설정: 창 닫힐 때 C++ 객체 자동 삭제
+            logger.debug(f"addSubWindow({stock_code}) 호출 완료: {sub_window}")
+            
             sub_window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True) 
             
             window_key = f"chart_{stock_code}"
             self.chart_subwindows[window_key] = sub_window # 추적
+            logger.debug(f"차트 창 추적 목록에 추가: {window_key}") # 추적 추가 로그
             
-            # --- 수정 시작: 저장된 geometry 복원 ---
-            saved_geometry = self.settings.value(f"window/{window_key}/geometry")
-            if saved_geometry:
-                logger.debug(f"저장된 geometry 복원: {window_key}, {saved_geometry}")
-                sub_window.setGeometry(saved_geometry)
-            else:
-                logger.debug(f"저장된 geometry 없음, 기본 표시: {window_key}")
-                sub_window.show() # 저장된 값 없으면 기본 show
-            # --- 수정 끝 ---
-            
-            # ChartWindow의 chart_closed 시그널 연결 (MainWindow에서 참조 제거용)
-            # 약한 참조(weak reference) 사용 고려 가능성 있음 (메모리 누수 방지)
+            # chart_closed 시그널 연결 전 로그
+            logger.debug(f"chart_closed 시그널 연결 시도: {window_key}")
             chart_window.chart_closed.connect(lambda code, key=window_key: self._handle_subwindow_destroyed(key, code))
+            logger.debug(f"chart_closed 시그널 연결 완료: {window_key}")
             
             sub_window.setWindowTitle(chart_window.windowTitle()) # 제목 설정
-            logger.info(f"새 차트 창 생성 및 표시 완료: {stock_name} ({stock_code})")
-            logger.debug(f"새 차트 창({stock_code}) 추적 목록에 추가됨")
             
-            # 생성된 서브 윈도우 반환 (필요시)
+            # sub_window.show() 호출 전 로그
+            logger.debug(f"sub_window.show() 호출 시도: {window_key}")
+            sub_window.show()
+            logger.debug(f"sub_window.show() 호출 완료: {window_key}")
+            
+            logger.info(f"새 차트 창 생성 및 표시 완료: {stock_name} ({stock_code})")
+            
             return sub_window
 
         except Exception as e:

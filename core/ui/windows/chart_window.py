@@ -15,7 +15,10 @@ import pyqtgraph as pg
 
 from core.api.kiwoom import KiwoomAPI
 from core.modules.chart import ChartModule
-from core.ui.components.chart_component import ChartComponent
+# 기존 차트 컴포넌트 임포트
+# from core.ui.components.chart_component import ChartComponent
+# 새로운 FinPlot 기반 차트 컴포넌트 임포트
+from core.ui.components.finplot_chart import FinPlotChartComponent
 from core.ui.stylesheets import StyleSheets
 from core.ui.constants.colors import Colors
 from core.ui.constants.chart_defs import INDICATOR_MAP
@@ -51,8 +54,8 @@ class ChartWindow(QWidget): # QMainWindow 대신 QWidget 사용 고려
         # KiwoomAPI는 MainWindow에서 관리하는 것을 사용하도록 수정 필요할 수 있음
         # 여기서는 일단 새로 생성하는 것으로 가정
         self.chart_module = ChartModule(kiwoom_api)
-        # 수정: ChartComponent 생성 시 chart_module 전달
-        self.chart_component = ChartComponent(self.chart_module)
+        # 수정: FinPlotChartComponent 사용
+        self.chart_component = FinPlotChartComponent(self.chart_module)
 
         self._init_ui()
         self._connect_signals()
@@ -270,7 +273,9 @@ class ChartWindow(QWidget): # QMainWindow 대신 QWidget 사용 고려
     def _on_indicator_toggled(self, indicator_code: str, checked: bool):
         """보조지표 체크박스 토글 시 슬롯"""
         logger.info(f"보조지표 토글: {indicator_code}, 상태: {checked}")
-        self.chart_component.toggle_indicator(indicator_code, checked)
+        # FinPlotChartComponent는 현재 toggle_indicator 메서드가 없으므로 주석 처리
+        # self.chart_component.toggle_indicator(indicator_code, checked)
+        # TODO: FinPlotChartComponent에 보조지표 토글 기능 추가
 
     @pyqtSlot(bool)
     def _on_chart_loaded(self, success: bool):

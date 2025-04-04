@@ -26,6 +26,26 @@ except ImportError as e:
     sys.stdout.flush()
     sys.exit(1)
 
+# pandas 임포트 테스트 (pandas_ta 없이)
+try:
+    print(f"[{datetime.now()}] DEBUG: pandas 임포트 시도...")
+    sys.stdout.flush()
+    import pandas as pd
+    print(f"[{datetime.now()}] DEBUG: pandas 임포트 성공! 버전: {pd.__version__}")
+    sys.stdout.flush()
+    
+    # pandas_ta 관련 오류 해결을 위한 환경 설정
+    print(f"[{datetime.now()}] DEBUG: pandas_ta 오류 해결을 위한 설정 적용...")
+    sys.path.append(os.path.join(os.path.dirname(__file__), 'venv311', 'Lib', 'site-packages'))
+    os.environ['PYTHONPATH'] = os.path.join(os.path.dirname(__file__), 'venv311', 'Lib', 'site-packages')
+    print(f"[{datetime.now()}] DEBUG: sys.path: {sys.path}")
+    sys.stdout.flush()
+except Exception as e:
+    print(f"[{datetime.now()}] CRITICAL: pandas 임포트 실패! 오류: {e}")
+    print(traceback.format_exc())
+    sys.stdout.flush()
+    sys.exit(1)
+
 # 추가: ChartModule 임포트 테스트
 try:
     print(f"[{datetime.now()}] DEBUG: ChartModule 임포트 시도...")
